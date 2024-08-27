@@ -27,28 +27,42 @@ export type Weather = z.infer<typeof Weather>; //*>Type of the Weather object
 //   }),
 // });
 // type Weather = InferOutput<typeof WeatherSchema>;
+
+const initialWeatherState = {
+  name: '',
+  main: {
+    temp: 0,
+    humidity: 0,
+    temp_min: 0,
+    temp_max: 0,
+  },
+};
+
 export const useWheater = () => {
   //*create state for the weather data
 
-  const [weather, setWeather] = useState({
-    name: '',
-    main: {
-      temp: 0,
-      humidity: 0,
-      temp_min: 0,
-      temp_max: 0,
-    },
-  });
+  const [weather, setWeather] = useState(initialWeatherState);
 
   //*Loader
   const [loading, setLoading] = useState(false);
+
+  //*not Found state
+  const [notFound, setNotFound] = useState(false);
+
+  //*Fetch the weather data
   const fetchWheater = async (search: Search) => {
     const appId = import.meta.env.VITE_API_KEY;
 
     setLoading(true);
+    setWeather(initialWeatherState);
     try {
       const geoUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${search.city},${search.country}&appid=${appId}`;
       const {data} = await axios(geoUrl); //*axios get request
+
+      if (!data[0]) {
+        setNotFound(true);
+        return;
+      }
       const lat = data[0].lat;
       const lon = data[0].lon;
       const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${appId}`;
@@ -76,5 +90,5 @@ export const useWheater = () => {
 
   const hasWeatherData = useMemo(() => weather.name, [weather]);
 
-  return {weather, setWeather, loading, fetchWheater, hasWeatherData};
+  return {weather, setWeather, notFound, loading, fetchWheater, hasWeatherData};
 };
